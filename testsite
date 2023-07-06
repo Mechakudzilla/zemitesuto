@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>[単語テストメーカー]</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    form {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 20px;
+    }
+
+    input[type="submit"] {
+      padding: 5px 20px;
+    }
+
+    #wordList {
+      margin-top:  50px;
+      text-align: center;
+    }
+
+    .button-container {
+      text-align: center;
+      margin-top: 10px;
+     
+    }
+
+    .toggle-button {
+      padding: 5px 10px;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>単語テストメーカー</h1>
+
+  <form id="wordForm">
+    <label>単語：<input type="text" id="wordInput" required></label>
+    <label>意味：<input type="text" id="meaningInput" required></label>
+    <input type="submit" value="保存">
+  </form>
+
+  <div class="button-container">
+    <button class="toggle-button" onclick="toggleDisplayMode('word')">単語のみ表示</button>
+    <button class="toggle-button" onclick="toggleDisplayMode('meaning')">意味のみ表示</button>
+    <button class="toggle-button" onclick="shuffleDisplayedWords()">ランダム</button>
+    <button class="toggle-button" onclick="toggleDisplayMode('both')">解答を表示</button>
+     <button class="toggle-button" onclick="deleteWordList()">保存した単語を削除</button>
+     
+    <select id="displayMode">
+      <option value="word">単語のみ表示</option>
+      <option value="meaning">意味のみ表示</option>
+      <option value="both">解答を表示</option>
+    </select>
+    
+    
+  </div>
+
+  <div id="wordList"></div>
+  <div id="wordCount"></div>
+
+  <script>
+    function saveWord() {
+      var wordInput = document.getElementById("wordInput");
+      var meaningInput = document.getElementById("meaningInput");
+
+      var word = wordInput.value;
+      var meaning = meaningInput.value;
+
+      wordInput.value = "";
+      meaningInput.value = "";
+
+      var wordList = JSON.parse(localStorage.getItem("wordList")) || [];
+      wordList.push({ word: word, meaning: meaning });
+      localStorage.setItem("wordList", JSON.stringify(wordList));
+
+      displayWordList();
+    }
+
+    function shuffleDisplayedWords() {
+  var wordListContainer = document.getElementById("wordList");
+
+  // 子要素を配列に取得
+  var wordElements = Array.from(wordListContainer.children);
+
+  // 単語要素をランダムに並び替え
+  wordElements = shuffleArray(wordElements);
+
+  // 並び替えた要素を再配置
+  wordElements.forEach(function(element) {
+    wordListContainer.appendChild(element);
+  });
+}
+
+function shuffleArray(array) {
+  var currentIndex = array.length, temporaryValue, randomIndex;
+
+  while (0 !== currentIndex) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
+}
+
+
+function displayWordList() {
+  var wordList = JSON.parse(localStorage.getItem("wordList")) || [];
+  var displayMode = document.getElementById("displayMode").value;
+  var wordListContainer = document.getElementById("wordList");
+  wordListContainer.innerHTML = "";
+
+  var selectedWords = getRandomWords(wordList, 1000000);
+
+  // 単語をアルファベット順にソート
+  selectedWords.sort(function(a, b) {
+    var wordA = a.word.toLowerCase();
+    var wordB = b.word.toLowerCase();
+    if (wordA < wordB) {
+      return -1;
+    }
+    if (wordA > wordB) {
+      return 1;
+    }
+    return 0;
+  });
+
+  for (var i = 0; i < selectedWords.length; i++) {
+    var word = selectedWords[i].word;
+    var meaning = selectedWords[i].meaning;
+
+    var wordElement = document.createElement("div");
+    wordElement.className = "word";
+
+    // インデックス i を使用して、対応する単語と意味を取得
+    var displayWord = displayMode === "word" ? word : meaning;
+    var displayMeaning = displayMode === "word" ? meaning : word;
+
+    var numberedWord = (i + 1) + ". " + displayWord; // 番号を付与
+
+    wordElement.textContent = displayMode === "both" ? numberedWord + " = " + displayMeaning : numberedWord;
+
+    wordListContainer.appendChild(wordElement);
+  }
+
+  updateWordCount();
+}
+
+
+
+
+
+
+
+    function toggleDisplayMode(mode) {
+      var displayMode = document.getElementById("displayMode");
+      displayMode.value = mode;
+      displayWordList();
+    }
+
+    function getRandomWords(wordList, count) {
+      var shuffled = wordList.slice(0);
+      var i = wordList.length;
+      var temp;
+      var index;
+
+      while (i--) {
+        index = Math.floor((i + 1) * Math.random());
+        temp = shuffled[index];
+        shuffled[index] = shuffled[i];
+        shuffled[i] = temp;
+      }
+
+      return shuffled.slice(0, count);
+    }
+
+    function updateWordCount() {
+      var wordList = JSON.parse(localStorage.getItem("wordList")) || [];
+      var wordCountContainer = document.getElementById("wordCount");
+      wordCountContainer.textContent = "保存中の単語数: " + wordList.length;
+    }
+
+    document.getElementById("wordForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      saveWord();
+    });
+
+    updateWordCount();
+
+    function deleteWordList() {
+      
+
+      if (confirm("削除してもよろしいですか？")) {
+  // OKボタンがクリックされた場合の処理
+  localStorage.removeItem("wordList");
+      displayWordList();// 削除後、一覧を再表示
+} else {
+  // キャンセルボタンがクリックされた場合の処理
+  // 何もしないか、必要な処理を追加する
+}
+
+    }
+    
+  </script>
+</body>
+</html>
